@@ -2,12 +2,56 @@ document.addEventListener("DOMContentLoaded", function () {
 
 const $ = id => document.getElementById(id);
 
+const EXCHANGE_API = "/.netlify/functions/exchange";
+
 function show(id) {
     $(id).classList.remove("hidden");
 }
 
 function hide(id) {
     $(id).classList.add("hidden");
+}
+
+function format(number) {
+    return Number(number).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function showMessage(element, message) {
+    element.innerHTML =
+        '<div class="warning">' + message + '</div>';
+}
+
+// Get exchange rate from MRA through Netlify
+async function getExchangeRate(currency) {
+
+    if (currency === "MWK") {
+        return {
+            rate: 1,
+            lastUpdated: "Not required"
+        };
+    }
+
+    const response = await fetch(
+        EXCHANGE_API + "?currency=" + encodeURIComponent(currency)
+    );
+
+    if (!response.ok) {
+        throw new Error("Could not retrieve the MRA exchange rate.");
+    }
+
+    const data = await response.json();
+
+    if (!data.rate || !Number.isFinite(Number(data.rate))) {
+        throw new Error("Invalid exchange rate received.");
+    }
+
+    return {
+        rate: Number(data.rate),
+        lastUpdated: data.lastUpdated || "Date unavailable"
+    };
 }
 
 // Start button
@@ -31,6 +75,7 @@ document.querySelectorAll(".back").forEach(function (button) {
         document.querySelectorAll(".page").forEach(function (page) {
             page.classList.add("hidden");
         });
+
         show("home");
     });
 });
@@ -48,161 +93,249 @@ $("insuranceChoice").addEventListener("change", function () {
     );
 });
 
-function showMessage(element, message) {
-    element.innerHTML = '<div class="warning">' + message + '</div>';
-}
-
 // Vehicle calculator
-$("vehicleForm").addEventListener("submit", function (event) {
-event.preventDefault();
+$("vehicleForm").addEventListener("submit", async function (event) {
 
-const year = Number($("vehicleYear").value);
-const cif = Number($("vehicleCif").value);
-const currency = $("vehicleCurrency").value;
-const port = Number($("vehiclePort").value);
-const cc = Number($("vehicleEngine").value);
-const category = $("vehicleCategory").value;
-const type = $("vehicleType").value;
+    event.preventDefault();
 
-const result = $("vehicleResult");
+    const result = $("vehicleResult");
 
-if (
-    year < 1900 ||
-    year > new Date().getFullYear() ||
-    cif <= 0 ||
-    port < 0 ||
-    cc <= 0
-) {
-    showMessage(result, "Please check your vehicle details.");
-    return;
-}
+    const year = Number($("vehicleYear").value);
+    const cif = Number($("vehicleCif").value);
+    const currency = $("vehicleCurrency").value;
+    const port = Number($("vehiclePort").value);
+    const cc = Number($("vehicleEngine").value);
+    const category = $("vehicleCategory").value;
+    const type = $("vehicleType").value;
 
-if (category !== "passenger") {
-    showMessage(result, "Commercial vehicle calculations are coming soon.");
-    return;
-}
+    if (
+        year < 1900 ||
+        year > new Date().getFullYear() ||
+        cif <= 0 ||
+        port < 0 ||
+        cc <= 0
+    ) {
+        showMessage(result, "Please check your vehicle details.");
+        return;
+    }
 
-if (type !== "petrol" && type !== "diesel") {
-    showMessage(result, "This calculation currently supports petrol and diesel cars only.");
-    return;
-}
+    if (category !== "passenger") {
+        showMessage(result, "Commercial vehicle calculations are coming soon.");
+        return;
+    }
 
-const age = new Date().getFullYear() - year;
+    if (type !== "petrol" && type !== "diesel") {
+        showMessage(result, "Petrol and diesel vehicles only for now.");
+        return;
+    }
 
-let ageBand;
+    result.innerHTML = "<p>Retrieving MRA exchange rate...</p>";
 
-if (age <= 8) {
-    ageBand = "8 years or less";
-} else if (age <= 12) {
-    ageBand = "9 to 12 years";
-} else {
-    ageBand = "13 years or older";
-}
+    try {
 
-let exciseRate = 0;
+        const exchange = await getExchangeRate(currency);
+        const rate = exchange.rate;
 
-if (cc < 1500) {
-    if (age <= 8) exciseRate = 0;
-    else if (age <= 12) exciseRate = 30;
-    else exciseRate = 60;
-} else if (cc < 2000) {
-    if (age <= 8) exciseRate = 15;
-    else if (age <= 12) exciseRate = 45;
-    else exciseRate = 75;
-} else if (cc < 2500) {
-    if (age <= 8) exciseRate = 35;
-    else if (age <= 12) exciseRate = 60;
-    else exciseRate = 90;
-} else if (cc <= 3000) {
-    if (age <= 8) exciseRate = 45;
-    else if (age <= 12) exciseRate = 70;
-    else exciseRate = 100;
-} else {
-    if (age <= 8) exciseRate = 55;
-    else if (age <= 12) exciseRate = 80;
-    else exciseRate = 100;
-}
+        const age = new Date().getFullYear() - year;
 
-const valueForDuty = cif + port;
+        let ageBand;
 
-const duty = valueForDuty * 0.25;
+        if (age <= 8) {
+            ageBand = "8 years or less";
+        } else if (age <= 12) {
+            ageBand = "9 to 12 years";
+        } else {
+            ageBand = "13 years or older";
+        }
 
-const excise = (valueForDuty + duty) * (exciseRate / 100);
+        let exciseRate = 0;
 
-const vat = (valueForDuty + duty + excise) * 0.175;
+        if (cc < 1500) {
+            if (age <= 8) exciseRate = 0;
+            else if (age <= 12) exciseRate = 30;
+            else exciseRate = 60;
 
-const fixedCharge = currency === "MWK" ? 35000 : 0;
+        } else if (cc < 2000) {
+            if (age <= 8) exciseRate = 15;
+            else if (age <= 12) exciseRate = 45;
+            else exciseRate = 75;
 
-const total = duty + excise + vat + fixedCharge;
+        } else if (cc < 2500) {
+            if (age <= 8) exciseRate = 35;
+            else if (age <= 12) exciseRate = 60;
+            else exciseRate = 90;
 
-const format = number =>
-    number.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
+        } else if (cc <= 3000) {
+            if (age <= 8) exciseRate = 45;
+            else if (age <= 12) exciseRate = 70;
+            else exciseRate = 100;
 
-result.innerHTML =
-    "<h3>Estimated import taxes</h3>" +
-    "<p>Vehicle: " + type.toUpperCase() + "</p>" +
-    "<p>Year: " + year + "</p>" +
-    "<p>Age: " + ageBand + "</p>" +
-    "<p>Engine: " + cc.toLocaleString() + " CC</p>" +
-    "<hr>" +
-    "<p>Value for duty: " + format(valueForDuty) + " " + currency + "</p>" +
-    "<p>Import duty (25%): " + format(duty) + " " + currency + "</p>" +
-    "<p>Excise (" + exciseRate + "%): " + format(excise) + " " + currency + "</p>" +
-    "<p>VAT (17.5%): " + format(vat) + " " + currency + "</p>" +
-    (currency === "MWK"
-        ? "<p>Fixed charge: MK" + format(fixedCharge) + "</p>"
-        : "<p>Fixed charge: Not included; calculated separately in MWK.</p>") +
-    "<hr>" +
-    "<h2>Estimated total: " + format(total) + " " + currency + "</h2>" +
-    "<small>Estimate only. Exchange-rate conversion and official MRA assessment are not included.</small>";
+        } else {
+            if (age <= 8) exciseRate = 55;
+            else if (age <= 12) exciseRate = 80;
+            else exciseRate = 100;
+        }
+
+        const valueForDuty = cif + port;
+
+        const duty = valueForDuty * 0.25;
+
+        const excise =
+            (valueForDuty + duty) * (exciseRate / 100);
+
+        const vat =
+            (valueForDuty + duty + excise) * 0.175;
+
+        const total = duty + excise + vat;
+
+        const mwkValue = valueForDuty * rate;
+        const mwkDuty = duty * rate;
+        const mwkExcise = excise * rate;
+        const mwkVat = vat * rate;
+        const mwkTotal = total * rate;
+
+        result.innerHTML =
+            "<h3>Provisional vehicle estimate</h3>" +
+
+            "<p>Vehicle: " + type.toUpperCase() + "</p>" +
+            "<p>Year: " + year + "</p>" +
+            "<p>Age: " + ageBand + "</p>" +
+            "<p>Engine: " + cc.toLocaleString() + " CC</p>" +
+
+            "<hr>" +
+
+            "<p>Value for duty: " +
+            format(valueForDuty) + " " + currency + "</p>" +
+
+            "<p>Exchange rate: 1 " + currency +
+            " = MK" + format(rate) + "</p>" +
+
+            "<p>Value in MWK: MK" +
+            format(mwkValue) + "</p>" +
+
+            "<hr>" +
+
+            "<p>Estimated import duty (25%): MK" +
+            format(mwkDuty) + "</p>" +
+
+            "<p>Estimated excise (" + exciseRate +
+            "%): MK" + format(mwkExcise) + "</p>" +
+
+            "<p>Estimated VAT (17.5%): MK" +
+            format(mwkVat) + "</p>" +
+
+            "<hr>" +
+
+            "<h2>Estimated taxes: MK" +
+            format(mwkTotal) + "</h2>" +
+
+            "<small>Exchange rate last updated: " +
+            escapeHTML(exchange.lastUpdated) +
+            "</small>" +
+
+            "<p><small>Provisional calculation only. Tax rates, customs valuation, other applicable charges and official MRA assessment may differ.</small></p>";
+
+    } catch (error) {
+
+        showMessage(
+            result,
+            "Exchange-rate error: " + escapeHTML(error.message) +
+            " Please try again later."
+        );
+    }
 
 });
 
 // Goods calculator
-$("goodsForm").addEventListener("submit", function (event) {
+$("goodsForm").addEventListener("submit", async function (event) {
+
     event.preventDefault();
+
+    const result = $("goodsResult");
 
     const name = $("productName").value.trim();
     const origin = $("productOrigin").value.trim();
     const price = Number($("goodsPrice").value);
     const shipping = Number($("goodsShipping").value);
     const currency = $("goodsCurrency").value;
+
     const known = $("insuranceChoice").value === "known";
-    const insurance = known ? Number($("goodsInsurance").value) : null;
+
+    const insurance = known
+        ? Number($("goodsInsurance").value)
+        : 0;
 
     if (
         !name ||
         !origin ||
         price <= 0 ||
         shipping < 0 ||
-        (known && (insurance === null || insurance < 0))
+        (known && insurance < 0)
     ) {
-        showMessage($("goodsResult"), "Please check your product information.");
+        showMessage(result, "Please check your product information.");
         return;
     }
 
-    showMessage(
-        $("goodsResult"),
-        "<h3>Product information received</h3>" +
-        "<p>Product: " + escapeHTML(name) + "</p>" +
-        "<p>Origin: " + escapeHTML(origin) + "</p>" +
-        "<p>Purchase price: " + price.toLocaleString() + " " + currency + "</p>" +
-        "<p>Shipping: " + shipping.toLocaleString() + " " + currency + "</p>" +
-        "<p>Insurance: " +
-        (known
-            ? insurance.toLocaleString() + " " + currency
-            : "Not provided") +
-        "</p>" +
-        "<br><strong>Tariff calculation is not yet connected.</strong>"
-    );
+    result.innerHTML = "<p>Retrieving MRA exchange rate...</p>";
+
+    try {
+
+        const exchange = await getExchangeRate(currency);
+
+        const totalValue = price + shipping + insurance;
+
+        const totalMWK = totalValue * exchange.rate;
+
+        result.innerHTML =
+
+            "<h3>Goods import estimate</h3>" +
+
+            "<p>Product: " + escapeHTML(name) + "</p>" +
+
+            "<p>Origin: " + escapeHTML(origin) + "</p>" +
+
+            "<p>Purchase price: " +
+            format(price) + " " + currency + "</p>" +
+
+            "<p>Shipping: " +
+            format(shipping) + " " + currency + "</p>" +
+
+            "<p>Insurance: " +
+            format(insurance) + " " + currency + "</p>" +
+
+            "<hr>" +
+
+            "<p>Total declared costs: " +
+            format(totalValue) + " " + currency + "</p>" +
+
+            "<p>Exchange rate: 1 " + currency +
+            " = MK" + format(exchange.rate) + "</p>" +
+
+            "<h2>Converted value: MK" +
+            format(totalMWK) + "</h2>" +
+
+            "<small>Exchange rate last updated: " +
+            escapeHTML(exchange.lastUpdated) +
+            "</small>" +
+
+            "<p><small>Customs duty, excise and import VAT are not yet calculated. This is not the final landed cost.</small></p>";
+
+    } catch (error) {
+
+        showMessage(
+            result,
+            "Exchange-rate error: " + escapeHTML(error.message) +
+            " Please try again later."
+        );
+    }
+
 });
 
-// Prevent HTML characters in product details from being interpreted as code
+// Prevent HTML characters from being interpreted as code
 function escapeHTML(value) {
+
     return String(value).replace(/[&<>"']/g, function (char) {
+
         return {
             "&": "&amp;",
             "<": "&lt;",
@@ -210,7 +343,9 @@ function escapeHTML(value) {
             '"': "&quot;",
             "'": "&#039;"
         }[char];
+
     });
+
 }
 
 });
