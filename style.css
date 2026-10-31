@@ -1,0 +1,32 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
+.hidden{display:none!important}
+#splash{min-height:100vh;background:#101a2b;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:25px}
+.brand{font-size:29px;font-weight:800}
+.brand span{color:#20b66b}
+#splash .brand{font-size:42px}
+.flag{font-size:48px;margin:20px}
+#splash p{color:#cbd5e1;margin-bottom:30px}
+button{cursor:pointer;border:0;border-radius:10px;padding:14px;font-size:15px;font-weight:bold}
+#startBtn,.calculate{background:#20b66b;color:white;width:100%}
+#startBtn{max-width:270px}
+header{background:#101a2b;color:white;padding:20px;display:flex;justify-content:space-between;align-items:center}
+header small{color:#cbd5e1}
+main{max-width:600px;margin:auto;padding:18px}
+h2{font-size:23px;margin-bottom:8px}
+.muted{color:#64748b;font-size:14px;margin-bottom:22px}
+.category{width:100%;background:white;border:1px solid #e2e8f0;display:flex;align-items:center;text-align:left;gap:16px;padding:20px;margin:12px 0;color:#172033}
+.category span{font-size:32px}
+.category small{display:block;color:#64748b;font-weight:normal;margin-top:6px}
+.page{background:white;padding:18px;border-radius:15px}
+.back{background:#e8edf4;color:#172033;margin-bottom:15px}
+label{display:block;font-size:14px;font-weight:bold;margin:17px 0 7px}
+input,select{width:100%;padding:14px;border:1px solid #cbd5e1;border-radius:9px;background:white;font-size:16px;min-height:48px}
+.calculate{margin-top:24px}
+.result{background:#e9f8ef;padding:16px;border-radius:10px;margin-top:18px;line-height:1.7;overflow-wrap:anywhere}
+.warning{background:#fff4df;color:#79520b;padding:14px;border-radius:9px;margin-top:12px;font-size:13px;line-height:1.6}
+footer{text-align:center;padding:25px;color:#64748b;font-size:13px}
+footer a{display:block;color:#08783e;margin:10px}
+#infoBtn{position:fixed;right:18px;bottom:18px;border-radius:50%;width:48px;height:48px;background:#20b66b;color:white;font-size:22px}
+#infoBox{position:fixed;bottom:75px;right:15px;left:15px;background:white;padding:18px;border-radius:12px;box-shadow:0 3px 15px #0002;line-height:1.5;font-size:14px}
+@media(max-width:360px){main{padding:12px}.page{padding:14px}}

@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DutyCheck Malawi</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body><section id="splash">
+  <div class="brand">Duty<span>Check</span></div>
+  <div class="flag">🇲🇼</div>
+  <p>Know your import costs before you buy.</p>
+  <button id="startBtn">GET STARTED</button>
+</section><div id="app" class="hidden">
+<header>
+  <div class="brand">Duty<span>Check</span></div>
+  <small>Malawi 🇲🇼</small>
+</header><main>
+<section id="home">
+  <h2>Import calculator</h2>
+  <p class="muted">What are you importing?</p>  <button class="category" data-page="vehicle">
+    <span>🚗</span>
+    <div>Vehicles<small>Calculate estimated vehicle import taxes</small></div>
+  </button>  <button class="category" data-page="goods">
+    <span>📦</span>
+    <div>Other goods<small>Calculate estimated goods import taxes</small></div>
+  </button>
+</section><section id="vehicle" class="page hidden">
+  <button class="back">← Back</button>
+  <h2>Vehicle calculator</h2>
+  <p class="muted">Enter your vehicle information.</p>  <form id="vehicleForm">
+    <label>Vehicle category</label>
+<select id="vehicleCategory" required>
+  <option value="passenger">Passenger vehicle</option>
+  <option value="commercial">Commercial / goods-carrying vehicle (Coming soon)</option>
+</select>
+
+    <label>Select currency</label>
+    <select id="vehicleCurrency" required>
+      <option value="USD">USD — US Dollar</option>
+      <option value="JPY">JPY — Japanese Yen</option>
+      <option value="ZAR">ZAR — South African Rand</option>
+      <option value="MWK">MWK — Malawi Kwacha</option>
+    </select><label>Cost, Insurance and Freight (CIF)</label>
+<input id="vehicleCif" type="number" min="0.01" step="any" placeholder="Enter CIF value" required>
+
+<label>Port charge</label>
+<input id="vehiclePort" type="number" min="0" step="any" placeholder="Enter port charge" required>
+
+<label>Year of manufacture</label>
+<input id="vehicleYear" type="number" min="1900" max="2100" placeholder="e.g. 2018" required>
+
+<label>Engine capacity (CC)</label>
+<input
+  id="vehicleEngine"
+  type="number"
+  min="1"
+  max="10000"
+  placeholder="e.g. 1496"
+  required
+>
+<label>Fuel type</label>
+<select id="vehicleType" required>
+  <option value="petrol">Petrol</option>
+  <option value="diesel">Diesel</option>
+  <option value="hybrid">Hybrid</option>
+  <option value="electric">Fully electric</option>
+</select>
+
+<button class="calculate" type="submit">CALCULATE IMPORT COST</button>
+
+  </form>  <div id="vehicleResult" aria-live="polite"></div>
+</section><section id="goods" class="page hidden">
+  <button class="back">← Back</button>
+  <h2>Other goods calculator</h2>
+  <p class="muted">Enter your product information.</p>  <form id="goodsForm">
+    <label>Product name</label>
+    <input id="productName" placeholder="e.g. Shoes, phones, clothes" required><label>Country of origin</label>
+<input id="productOrigin" placeholder="e.g. China" required>
+
+<label>Product purchase price</label>
+<input id="goodsPrice" type="number" min="0.01" step="any" placeholder="Enter purchase price" required>
+
+<label>Currency</label>
+<select id="goodsCurrency">
+  <option value="USD">USD — US Dollar</option>
+  <option value="CNY">CNY — Chinese Yuan</option>
+  <option value="ZAR">ZAR — South African Rand</option>
+  <option value="EUR">EUR — Euro</option>
+  <option value="MWK">MWK — Malawi Kwacha</option>
+</select>
+
+<label>Shipping cost</label>
+<input id="goodsShipping" type="number" min="0" step="any" placeholder="Enter shipping cost" required>
+
+<label>Insurance</label>
+<select id="insuranceChoice">
+  <option value="unknown">I don't know my insurance cost</option>
+  <option value="known">I know my insurance cost</option>
+</select>
+
+<div id="insuranceBox" class="hidden">
+  <label>Insurance amount</label>
+  <input id="goodsInsurance" type="number" min="0" step="any" placeholder="Enter insurance">
+</div>
+
+<label>Product HS code (if known)</label>
+<input id="goodsHS" placeholder="Optional 8-digit HS code">
+
+<button class="calculate" type="submit">CALCULATE IMPORT COST</button>
+
+  </form>  <div id="goodsResult" aria-live="polite"></div>
+</section></main><footer>
+  <p>DutyCheck Malawi</p>
+  <p>Estimates are not official customs assessments.</p>
+  <a href="https://www.mra.mw/duty" target="_blank">MRA vehicle calculator</a>
+  <a href="https://portal.trade.gov.mw/en-gb/site/display/23" target="_blank">Official tariff search</a>
+</footer>
+</div><button id="infoBtn" class="hidden" aria-label="Information">ⓘ</button>
+
+<div id="infoBox" class="hidden">
+  DutyCheck helps Malawians understand potential import costs before buying vehicles and other goods.
+  Always confirm final assessments with MRA or a licensed clearing agent.
+</div><script src="script.js"></script></body>
+</html>
