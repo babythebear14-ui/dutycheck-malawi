@@ -230,11 +230,15 @@ $("vehicleForm").addEventListener("submit", async function (event) {
             format(mwkTotal) + "</h2>" +
 
             "<small>Exchange rate last updated: " +
-            escapeHTML(exchange.lastUpdated) +
-            "</small>" +
+escapeHTML(exchange.lastUpdated || "Date unavailable") +
+"</small>" +
 
-            "<p><small>Provisional calculation only. Tax rates, customs valuation, other applicable charges and official MRA assessment may differ.</small></p>";
+        (exchange.lastUpdated &&
+         (Date.now() - new Date(exchange.lastUpdated).getTime()) > 30 * 24 * 60 * 60 * 1000
+            ? "<p style='color:#b45309;font-weight:bold;'>⚠️ Warning: This MRA exchange rate is more than 30 days old. Your converted estimate may not reflect the current rate.</p>"
+            : "") +
 
+        "<p><small>Provisional calculation only. Tax rates, customs valuation, other applicable charges and official MRA assessment may differ.</small></p>";
     } catch (error) {
 
         showMessage(
