@@ -226,7 +226,7 @@ $("vehicleForm").addEventListener("submit", async function (event) {
 
             "<hr>" +
 
-            "<h2>Estimated taxes: MK" +
+            "<h2>Estimated taxes (excluding other charges): MK" +
             format(mwkTotal) + "</h2>" +
 
             "<small>Exchange rate last updated: " +
