@@ -19,9 +19,51 @@ function format(number) {
     });
 }
 
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+        return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        }[char];
+    });
+}
+
 function showMessage(element, message) {
     element.innerHTML =
         '<div class="warning">' + message + '</div>';
+}
+
+function getExchangeWarning(exchange) {
+
+    if (exchange.lastUpdated === "Not required") {
+        return "";
+    }
+
+    if (!exchange.lastUpdated ||
+        exchange.lastUpdated === "Date unavailable") {
+        return "<p style='color:#b45309;font-weight:bold;'>⚠️ Exchange-rate update date unavailable. Verify the rate before relying on this estimate.</p>";
+    }
+
+    const updatedTime = new Date(exchange.lastUpdated).getTime();
+
+    if (!Number.isFinite(updatedTime)) {
+        return "<p style='color:#b45309;font-weight:bold;'>⚠️ Exchange-rate update date could not be verified.</p>";
+    }
+
+    const age = Date.now() - updatedTime;
+
+    if (age > 30 * 24 * 60 * 60 * 1000) {
+        return "<p style='color:#b45309;font-weight:bold;'>⚠️ Warning: This MRA exchange rate is more than 30 days old. Your converted estimate may not reflect the current rate.</p>";
+    }
+
+    if (age < 0) {
+        return "<p style='color:#b45309;font-weight:bold;'>⚠️ Exchange-rate date is in the future. Please verify it.</p>";
+    }
+
+    return "";
 }
 
 // Get exchange rate from MRA through Netlify
@@ -35,7 +77,8 @@ async function getExchangeRate(currency) {
     }
 
     const response = await fetch(
-        EXCHANGE_API + "?currency=" + encodeURIComponent(currency)
+        EXCHANGE_API + "?currency=" +
+        encodeURIComponent(currency)
     );
 
     if (!response.ok) {
@@ -44,12 +87,14 @@ async function getExchangeRate(currency) {
 
     const data = await response.json();
 
-    if (!data.rate || !Number.isFinite(Number(data.rate))) {
+    const rate = Number(data.rate);
+
+    if (!Number.isFinite(rate) || rate <= 0) {
         throw new Error("Invalid exchange rate received.");
     }
 
     return {
-        rate: Number(data.rate),
+        rate: rate,
         lastUpdated: data.lastUpdated || "Date unavailable"
     };
 }
@@ -72,6 +117,7 @@ document.querySelectorAll(".category").forEach(function (button) {
 // Back buttons
 document.querySelectorAll(".back").forEach(function (button) {
     button.addEventListener("click", function () {
+
         document.querySelectorAll(".page").forEach(function (page) {
             page.classList.add("hidden");
         });
@@ -108,14 +154,20 @@ $("vehicleForm").addEventListener("submit", async function (event) {
     const category = $("vehicleCategory").value;
     const type = $("vehicleType").value;
 
+    const currentYear = new Date().getFullYear();
+
     if (
+        !Number.isFinite(year) ||
+        !Number.isFinite(cif) ||
+        !Number.isFinite(port) ||
+        !Number.isFinite(cc) ||
         year < 1900 ||
-        year > new Date().getFullYear() ||
+        year > currentYear ||
         cif <= 0 ||
         port < 0 ||
         cc <= 0
     ) {
-        showMessage(result, "Please check your vehicle details.");
+        showMessage(result, "Please enter valid vehicle details and numbers.");
         return;
     }
 
@@ -125,7 +177,7 @@ $("vehicleForm").addEventListener("submit", async function (event) {
     }
 
     if (type !== "petrol" && type !== "diesel") {
-        showMessage(result, "Petrol and diesel vehicles only for now.");
+        showMessage(result, "Hybrid and electric vehicle calculations are not yet supported.");
         return;
     }
 
@@ -136,7 +188,7 @@ $("vehicleForm").addEventListener("submit", async function (event) {
         const exchange = await getExchangeRate(currency);
         const rate = exchange.rate;
 
-        const age = new Date().getFullYear() - year;
+        const age = currentYear - year;
 
         let ageBand;
 
@@ -151,26 +203,31 @@ $("vehicleForm").addEventListener("submit", async function (event) {
         let exciseRate = 0;
 
         if (cc < 1500) {
+
             if (age <= 8) exciseRate = 0;
             else if (age <= 12) exciseRate = 30;
             else exciseRate = 60;
 
         } else if (cc < 2000) {
+
             if (age <= 8) exciseRate = 15;
             else if (age <= 12) exciseRate = 45;
             else exciseRate = 75;
 
         } else if (cc < 2500) {
+
             if (age <= 8) exciseRate = 35;
             else if (age <= 12) exciseRate = 60;
             else exciseRate = 90;
 
         } else if (cc <= 3000) {
+
             if (age <= 8) exciseRate = 45;
             else if (age <= 12) exciseRate = 70;
             else exciseRate = 100;
 
         } else {
+
             if (age <= 8) exciseRate = 55;
             else if (age <= 12) exciseRate = 80;
             else exciseRate = 100;
@@ -195,19 +252,23 @@ $("vehicleForm").addEventListener("submit", async function (event) {
         const mwkTotal = total * rate;
 
         result.innerHTML =
+
             "<h3>Provisional vehicle estimate</h3>" +
 
-            "<p>Vehicle: " + type.toUpperCase() + "</p>" +
+            "<p>Vehicle: " + escapeHTML(type.toUpperCase()) + "</p>" +
+
             "<p>Year: " + year + "</p>" +
+
             "<p>Age: " + ageBand + "</p>" +
+
             "<p>Engine: " + cc.toLocaleString() + " CC</p>" +
 
             "<hr>" +
 
             "<p>Value for duty: " +
-            format(valueForDuty) + " " + currency + "</p>" +
+            format(valueForDuty) + " " + escapeHTML(currency) + "</p>" +
 
-            "<p>Exchange rate: 1 " + currency +
+            "<p>Exchange rate: 1 " + escapeHTML(currency) +
             " = MK" + format(rate) + "</p>" +
 
             "<p>Value in MWK: MK" +
@@ -230,20 +291,19 @@ $("vehicleForm").addEventListener("submit", async function (event) {
             format(mwkTotal) + "</h2>" +
 
             "<small>Exchange rate last updated: " +
-escapeHTML(exchange.lastUpdated || "Date unavailable") +
-"</small>" +
+            escapeHTML(exchange.lastUpdated) +
+            "</small>" +
 
-        (exchange.lastUpdated &&
-         (Date.now() - new Date(exchange.lastUpdated).getTime()) > 30 * 24 * 60 * 60 * 1000
-            ? "<p style='color:#b45309;font-weight:bold;'>⚠️ Warning: This MRA exchange rate is more than 30 days old. Your converted estimate may not reflect the current rate.</p>"
-            : "") +
+            getExchangeWarning(exchange) +
 
-        "<p><small>Provisional calculation only. Tax rates, customs valuation, other applicable charges and official MRA assessment may differ.</small></p>";
+            "<p><small>Provisional calculation only. Tax rates, customs valuation, tariff classification, other applicable charges and official MRA assessment may differ.</small></p>";
+
     } catch (error) {
 
         showMessage(
             result,
-            "Exchange-rate error: " + escapeHTML(error.message) +
+            "Exchange-rate error: " +
+            escapeHTML(error.message) +
             " Please try again later."
         );
     }
@@ -272,11 +332,14 @@ $("goodsForm").addEventListener("submit", async function (event) {
     if (
         !name ||
         !origin ||
+        !Number.isFinite(price) ||
+        !Number.isFinite(shipping) ||
+        !Number.isFinite(insurance) ||
         price <= 0 ||
         shipping < 0 ||
-        (known && insurance < 0)
+        insurance < 0
     ) {
-        showMessage(result, "Please check your product information.");
+        showMessage(result, "Please check your product information and enter valid amounts.");
         return;
     }
 
@@ -299,20 +362,20 @@ $("goodsForm").addEventListener("submit", async function (event) {
             "<p>Origin: " + escapeHTML(origin) + "</p>" +
 
             "<p>Purchase price: " +
-            format(price) + " " + currency + "</p>" +
+            format(price) + " " + escapeHTML(currency) + "</p>" +
 
             "<p>Shipping: " +
-            format(shipping) + " " + currency + "</p>" +
+            format(shipping) + " " + escapeHTML(currency) + "</p>" +
 
             "<p>Insurance: " +
-            format(insurance) + " " + currency + "</p>" +
+            format(insurance) + " " + escapeHTML(currency) + "</p>" +
 
             "<hr>" +
 
             "<p>Total declared costs: " +
-            format(totalValue) + " " + currency + "</p>" +
+            format(totalValue) + " " + escapeHTML(currency) + "</p>" +
 
-            "<p>Exchange rate: 1 " + currency +
+            "<p>Exchange rate: 1 " + escapeHTML(currency) +
             " = MK" + format(exchange.rate) + "</p>" +
 
             "<h2>Converted value: MK" +
@@ -322,34 +385,20 @@ $("goodsForm").addEventListener("submit", async function (event) {
             escapeHTML(exchange.lastUpdated) +
             "</small>" +
 
+            getExchangeWarning(exchange) +
+
             "<p><small>Customs duty, excise and import VAT are not yet calculated. This is not the final landed cost.</small></p>";
 
     } catch (error) {
 
         showMessage(
             result,
-            "Exchange-rate error: " + escapeHTML(error.message) +
+            "Exchange-rate error: " +
+            escapeHTML(error.message) +
             " Please try again later."
         );
     }
 
 });
-
-// Prevent HTML characters from being interpreted as code
-function escapeHTML(value) {
-
-    return String(value).replace(/[&<>"']/g, function (char) {
-
-        return {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        }[char];
-
-    });
-
-}
 
 });
