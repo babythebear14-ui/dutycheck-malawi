@@ -29,18 +29,18 @@
   <h2>Vehicle calculator</h2>
   <p class="muted">Enter your vehicle information.</p>  <form id="vehicleForm">
     <label>Vehicle category</label>
-<select id="vehicleCategory" required>
-  <option value="passenger">Passenger vehicle</option>
-  <option value="commercial">Commercial / goods-carrying vehicle (Coming soon)</option>
+    <select id="vehicleCategory" required>
+      <option value="passenger">Passenger vehicle</option>
+      <option value="commercial">Commercial / goods-carrying vehicle (Coming soon)</option>
+    </select><label>Select currency</label>
+<select id="vehicleCurrency" required>
+  <option value="USD">USD — US Dollar</option>
+  <option value="JPY">JPY — Japanese Yen</option>
+  <option value="ZAR">ZAR — South African Rand</option>
+  <option value="MWK">MWK — Malawi Kwacha</option>
 </select>
 
-    <label>Select currency</label>
-    <select id="vehicleCurrency" required>
-      <option value="USD">USD — US Dollar</option>
-      <option value="JPY">JPY — Japanese Yen</option>
-      <option value="ZAR">ZAR — South African Rand</option>
-      <option value="MWK">MWK — Malawi Kwacha</option>
-    </select><label>Cost, Insurance and Freight (CIF)</label>
+<label>Cost, Insurance and Freight (CIF)</label>
 <input id="vehicleCif" type="number" min="0.01" step="any" placeholder="Enter CIF value" required>
 
 <label>Port charge</label>
@@ -50,14 +50,8 @@
 <input id="vehicleYear" type="number" min="1900" max="2100" placeholder="e.g. 2018" required>
 
 <label>Engine capacity (CC)</label>
-<input
-  id="vehicleEngine"
-  type="number"
-  min="1"
-  max="10000"
-  placeholder="e.g. 1496"
-  required
->
+<input id="vehicleEngine" type="number" min="1" max="10000" placeholder="e.g. 1496" required>
+
 <label>Fuel type</label>
 <select id="vehicleType" required>
   <option value="petrol">Petrol</option>
@@ -68,8 +62,8 @@
 
 <button class="calculate" type="submit">CALCULATE IMPORT COST</button>
 
-  </form>  <div id="vehicleResult" aria-live="polite"></div>
-</section><section id="goods" class="page hidden">
+  </form>  <div id="vehicleResult" aria-live="polite"></div>  <!-- Adsterra Native Banner -->  <div id="container-4a44f89fb5991d90bf5a4ff9ac2047c1"></div>
+  <script async="async" data-cfasync="false" src="https://bauval.org/21/4a44f89fb5991d90bf5a4ff9ac2047c1"></script></section><section id="goods" class="page hidden">
   <button class="back">← Back</button>
   <h2>Other goods calculator</h2>
   <p class="muted">Enter your product information.</p>  <form id="goodsForm">
@@ -109,7 +103,8 @@
 <button class="calculate" type="submit">CALCULATE IMPORT COST</button>
 
   </form>  <div id="goodsResult" aria-live="polite"></div>
-</section></main><footer>
+</section>
+</main><footer>
   <p>DutyCheck Malawi</p>
   <p>Estimates are not official customs assessments.</p>
   <a href="https://www.mra.mw/duty" target="_blank">MRA vehicle calculator</a>
@@ -121,4 +116,4 @@
   DutyCheck helps Malawians understand potential import costs before buying vehicles and other goods.
   Always confirm final assessments with MRA or a licensed clearing agent.
 </div><script src="script.js"></script></body>
-</html>
+  </html>
